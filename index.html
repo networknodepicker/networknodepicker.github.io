@@ -1,0 +1,251 @@
+<div id="map"></div>
+<br>
+<input type="button" value="Get coordinates" onclick="getCoordinates()">
+<input type="button" value="Get wired points" onclick="wiredPoints()">
+<input type="button" value="New road" onclick="newRoad()">
+<input type="button" value="Wired location" onclick="wiredLocation()">
+<style>
+#map {
+  height: 800px;
+}
+</style>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAri9wOFZgQxCRWh1liQE9clfAm83go3-4&libraries=drawing"></script>
+<script>
+var directionsDisplay;
+var directionsService = new google.maps.DirectionsService();
+var map;
+var poly;
+var polyOptions = {
+	strokeColor: '#000000',
+	strokeOpacity: 1.0,
+	strokeWeight: 3
+};
+var update_timeout = null;
+var listCoor = [["long","lat"]];
+var listWired = [["wired long","wired lat"]];
+var listLines = [["line long, line lat"]];
+var csvRows = [];
+
+function initialize() {
+	directionsDisplay = new google.maps.DirectionsRenderer();
+	var qc = new google.maps.LatLng(14.660142974392881,121.06790524721144);
+	var mapOptions = {
+		zoom: 18,
+		center: qc,
+		disableDoubleClickZoom: true,
+		mapTypeId: 'hybrid'
+	}
+	map = new google.maps.Map(document.getElementById("map"), mapOptions);
+  
+	coorListener = map.addListener('click', function(e){
+		update_timeout = setTimeout(function(){
+			var marker = new google.maps.Marker({
+				position: e.latLng,
+				map: map,
+				draggable: true,
+			});
+			var xCoor = marker.getPosition().lng();
+			var yCoor = marker.getPosition().lat();
+			calculateUTM(yCoor,xCoor,"point");
+		}, 500);
+	});
+
+	poly = new google.maps.Polyline(polyOptions)
+
+	map.addListener('dblclick', function(event){
+		//from http://maps.zemplate.com/resources/draw-a-polyline-on-a-google-map-get-polyline-length-coordinates
+		clearTimeout(update_timeout);
+		var image = 'https://developers.google.com/maps/documentation/javascript/examples/full/images/beachflag.png';
+		poly.setMap(map);
+		var path = poly.getPath();
+		path.push(event.latLng);
+		var marker = new google.maps.Marker({
+			position: event.latLng,
+			map: map,
+			icon: image
+		});
+		var xCoor = marker.getPosition().lng();
+		var yCoor = marker.getPosition().lat();
+		calculateUTM(yCoor,xCoor,"line");
+		//listLines.push([xCoor,yCoor]);
+	});
+
+	directionsDisplay.setMap(map);
+
+}
+
+function getCoordinates() {
+	listCoor.push([" "," "]);
+	listLines.push([" ", " "]);
+	listWired.push([" ", " "]);
+	for(var i=0, l=listCoor.length; i<l; ++i){
+		csvRows.push(listCoor[i].join(','));
+	}
+	for(var i=0, l=listWired.length; i<l; ++i){
+		csvRows.push(listWired[i].join(','));
+	}
+	for(var i=0, l=listLines.length; i<l; ++i){
+		csvRows.push(listLines[i].join(','));
+	}
+	var csvString = csvRows.join("%0A");
+	var a         = document.createElement('a');
+	a.href        = 'data:attachment/csv,' + csvString;
+	a.target      = '_blank';
+	a.download    = 'coordinates.csv';
+
+	document.body.appendChild(a);
+	a.click();
+}
+
+function newRoad(){
+	poly = new google.maps.Polyline(polyOptions);
+	listLines.push([" "," "]);
+}
+
+function wiredPoints(){
+	google.maps.event.removeListener(coorListener)
+	coorListener = map.addListener('click', function(e){
+		update_timeout = setTimeout(function(){
+			var marker = new google.maps.Marker({
+				position: e.latLng,
+				map: map,
+				draggable: true,
+			});
+			var xCoor = marker.getPosition().lng();
+			var yCoor = marker.getPosition().lat();
+			calculateUTM(yCoor,xCoor,"wiredpoint");
+		}, 500);
+	});
+}
+
+function wiredLocation(){
+	initialLocation = [
+		new google.maps.LatLng(map.getCenter().lat()+0.0001,map.getCenter().lng()+0.0001),
+		new google.maps.LatLng(map.getCenter().lat()-0.0001,map.getCenter().lng()+0.0001),
+		new google.maps.LatLng(map.getCenter().lat()-0.0001,map.getCenter().lng()-0.0001),
+		new google.maps.LatLng(map.getCenter().lat()+0.0001,map.getCenter().lng()-0.0001)		
+	];
+	newLocation = new google.maps.Polygon({
+		paths: initialLocation,
+		draggable: true,
+		editable: true,
+		strokeColor: '#FF0000',
+		strokeOpacity: 0.8,
+		strokeWeight: 2,
+		fillColor: '#FF0000',
+		fillOpacity: 0.15
+	});
+
+	newLocation.setMap(map);
+
+	newLocation.addListener('click', function(event){
+		update_timeout = setTimeout(function(){
+			var marker = new google.maps.Marker({
+				position: event.latLng,
+				map: map,
+				draggable: true,
+			});
+			var xCoor = marker.getPosition().lng();
+			var yCoor = marker.getPosition().lat();
+			calculateUTM(yCoor,xCoor,"wiredpoint");
+		}, 500);
+	});
+
+	newLocation.addListener('dblclick', function(event){
+		clearTimeout(update_timeout);
+		var image = 'https://developers.google.com/maps/documentation/javascript/examples/full/images/beachflag.png';
+		var marker = new google.maps.Marker({
+			position: event.latLng,
+			map: map,
+			icon: image
+		});
+		var xCoor = marker.getPosition().lng();
+		var yCoor = marker.getPosition().lat();
+		calculateUTM(yCoor,xCoor,"point");
+	});
+}
+
+function calculateUTM(latd0,lngd0,type){
+	//Convert Latitude and Longitude to UTM
+	//from http://www.uwgb.edu/dutchs/usefuldata/ConvertUTMNoOZ.HTM
+
+	var drad = Math.PI/180;//Convert degrees to radians
+	var k0 = 0.9996;//scale on central meridian
+	var a = 6378137.0;//equatorial radius, meters.
+	var f = 1/298.2572236;//polar flattening.
+	var b = a*(1-f);//polar axis.
+	var e = Math.sqrt(1 - (b/a)*(b/a));//eccentricity
+	
+	var phi = latd0*drad;//Convert latitude to radians
+	var lng = lngd0*drad;//Convert longitude to radians
+	var utmz = 1 + Math.floor((lngd0+180)/6);//calculate utm zone
+	var latz = 0;//Latitude zone: A-B S of -80, C-W -80 to +72, X 72-84, Y,Z N of 84
+	
+	if (latd0 > -80 && latd0 < 72){
+		latz = Math.floor((latd0 + 80)/8)+2;
+	}
+	if (latd0 > 72 && latd0 < 84){
+		latz = 21;
+	}
+	if (latd0 > 84){
+		latz = 23;
+	}
+		
+	var zcm = 3 + 6*(utmz-1) - 180;//Central meridian of zone
+
+	//Calculate Intermediate Terms
+	var e0 = e/Math.sqrt(1 - e*e);//Called e prime in reference
+	var esq = (1 - (b/a)*(b/a));//e squared for use in expansions
+	var e0sq = e*e/(1-e*e);// e0 squared - always even powers
+	var N = a/Math.sqrt(1-Math.pow(e*Math.sin(phi),2));
+	var T = Math.pow(Math.tan(phi),2);
+	var C = e0sq*Math.pow(Math.cos(phi),2);
+	var A = (lngd0-zcm)*drad*Math.cos(phi);
+	
+	//Calculate M
+	var M = phi*(1 - esq*(1/4 + esq*(3/64 + 5*esq/256)));
+	M = M - Math.sin(2*phi)*(esq*(3/8 + esq*(3/32 + 45*esq/1024)));
+	M = M + Math.sin(4*phi)*(esq*esq*(15/256 + esq*45/1024));
+	M = M - Math.sin(6*phi)*(esq*esq*esq*(35/3072));
+	M = M*a;//Arc length along standard meridian
+	var M0 = 0;//M0 is M for some origin latitude other than zero. Not needed for standard UTM
+	
+	//Calculate UTM Values
+	var x = k0*N*A*(1 + A*A*((1-T+C)/6 + A*A*(5 - 18*T + T*T + 72*C -58*e0sq)/120));//Easting relative to CM
+	x=x+500000;//Easting standard 
+	var y = k0*(M - M0 + N*Math.tan(phi)*(A*A*(1/2 + A*A*((5 - T + 9*C + 4*C*C)/24 + A*A*(61 - 58*T + T*T + 600*C - 330*e0sq)/720))));//Northing from equator
+	var yg = y + 10000000;//yg = y global, from S. Pole
+	
+	if (y < 0){
+		y = 10000000+y;
+	}
+
+	//Output
+	if(type == "point"){
+		listCoor.push([x,y]);	
+	}
+	else if(type == "line"){
+		listLines.push([x,y]);	
+	}
+	else{
+		listWired.push([x,y]);
+	}
+}
+
+google.maps.event.addDomListener(window, 'load', initialize);
+
+/*
+var xCoor = 6371*Math.cos(someMarker.getPosition().lat())*Math.cos(someMarker.getPosition().lng());
+var yCoor = 6371*Math.cos(someMarker.getPosition().lat())*Math.sin(someMarker.getPosition().lng());
+
+var markerLat = (event.latLng.lat()).toFixed(6);
+var markerLng = (event.latLng.lng()).toFixed(6);
+$("#coordlist").append("new google.maps.LatLng(" + markerLat + ", " + markerLng + "), <br/>");
+  var length = google.maps.geometry.spherical.computeLength(poly.getPath());
+  var kmlength = (length * .001).toFixed(2);
+ var milength = (length * 0.000621371).toFixed(2);
+  if (kmlength > 0) {
+      $("#lengthkm").html(kmlength);
+      $("#lengthmi").html(milength);
+  }*/
+</script>
