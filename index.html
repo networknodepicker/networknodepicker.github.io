@@ -15,8 +15,8 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         
         <link rel="shortcut icon" type="image/x-icon" href="favicon.ico">
-        
-        <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAri9wOFZgQxCRWh1liQE9clfAm83go3-4&libraries=drawing"></script>
+
+        <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAri9wOFZgQxCRWh1liQE9clfAm83go3-4"></script>
 
         <script>
             var directionsDisplay;
@@ -230,13 +230,20 @@
     
     <body>
     
-	<div id="map"></div>
-	<br>
+        <div id="map"></div>
+        <br>
 
-	<input type="button" value="Save coordinates" onclick="getCoordinates()">
-	<input type="button" value="New road" onclick="newRoad()">
-	<input type="button" value="New Wired location" onclick="wiredLocation()">
-
+        <input type="button" style="width:200px;" value="Save coordinates" onclick="getCoordinates()">
+        <paragraph> Click on this button to save the coordinates to a CSV file. </paragraph>
+        <br>
+        <br>
+        <input type="button" style="width:200px;" value="New road" onclick="newRoad()">
+        <paragraph> Click on this button to start a new road. </paragraph>
+        <br>
+        <br>
+        <input type="button" style="width:200px;" value="New Wired location" onclick="wiredLocation()">
+        <paragraph> Click on this button to add a new wired location. </paragraph>
+        
     </body>
 	
-</html
+</html>
