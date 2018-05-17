@@ -57,7 +57,7 @@
                         });
                         var xCoor = marker.getPosition().lng();
                         var yCoor = marker.getPosition().lat();
-                        calculateUTM(yCoor,xCoor,"point");
+                        calculateUTM(yCoor,xCoor,"wiredpoint");
                     }, 500);
                 });
 
@@ -117,8 +117,8 @@
                 listLines.push([" "," "]);
             }
 
-            function wiredLocation(){
-                //Adds a draggable and editable wired location where wired nodes can be placed
+            function wirelessLocation(){
+                //Adds a draggable and editable wireless location where wireless nodes can be placed
 
                 initialLocation = [
                     new google.maps.LatLng(map.getCenter().lat()+0.0001,map.getCenter().lng()+0.0001),
@@ -140,7 +140,7 @@
 
                 newLocation.setMap(map);
 
-                //Add listener for single click inside a wired location, places a pin that represents a wired node
+                //Add listener for single click inside a wireless location, places a pin that represents a wireless node
                 newLocation.addListener('click', function(event){
                     update_timeout = setTimeout(function(){
                         var marker = new google.maps.Marker({
@@ -150,7 +150,7 @@
                         });
                         var xCoor = marker.getPosition().lng();
                         var yCoor = marker.getPosition().lat();
-                        calculateUTM(yCoor,xCoor,"wiredpoint");
+                        calculateUTM(yCoor,xCoor,"point");
                     }, 500);
                 });
             }
@@ -233,16 +233,26 @@
         <div id="map"></div>
         <br>
 
-        <input type="button" style="width:200px;" value="Save coordinates" onclick="getCoordinates()">
+        <ul>
+        	<li> To add a volunteer node, click on anywhere in the map. A pin, which represents a wired node, will appear. </li>
+        	<li> To add a road, first click on the New Road button. Then, double click on the endpoints of the road on the map. A flag pin should appear every time you double click. Do not forget to click on the New Road button when defining another road. </li>
+        	<li> To place wireless nodes, you first have to define a wireless location. Click on the New Wireless Location and a polygon (set to a rectangle initially) will appear on the map. You can drag and shape this polygon to better fit the intended wireless location. Clicking inside the polygon will make a pin appear, this time representing a wireless node. </li>
+        	<li> To get the coordinates to give to the geometric heuristic, just click on the Save Coordinates button. </li>
+        </ul>
+        <br>
+        
+        <input type="button" style="width:200px;" value="Save Coordinates" onclick="getCoordinates()">
         <paragraph> Click on this button to save the coordinates to a CSV file. </paragraph>
         <br>
         <br>
-        <input type="button" style="width:200px;" value="New road" onclick="newRoad()">
+        
+        <input type="button" style="width:200px;" value="New Road" onclick="newRoad()">
         <paragraph> Click on this button to start a new road. </paragraph>
         <br>
         <br>
-        <input type="button" style="width:200px;" value="New Wired location" onclick="wiredLocation()">
-        <paragraph> Click on this button to add a new wired location. </paragraph>
+        
+        <input type="button" style="width:200px;" value="New Wireless Location" onclick="wirelessLocation()">
+        <paragraph> Click on this button to add a new wireless location. </paragraph>
         
     </body>
 	
