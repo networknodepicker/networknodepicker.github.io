@@ -40,12 +40,19 @@
                 directionsDisplay = new google.maps.DirectionsRenderer();
                 var qc = new google.maps.LatLng(14.660142974392881,121.06790524721144);
                 var mapOptions = {
-                    zoom: 18,
+                    zoom: 13,
                     center: qc,
                     disableDoubleClickZoom: true,
                     mapTypeId: 'hybrid'
                 }
                 map = new google.maps.Map(document.getElementById("map"), mapOptions);
+
+                if (navigator.geolocation) {
+                     navigator.geolocation.getCurrentPosition(function (position) {
+                         initialLocation = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
+                         map.setCenter(initialLocation);
+                     });
+                 }
 
                 //Add listener for single click, places a pin that represents a wired node
                 coorListener = map.addListener('click', function(e){
@@ -124,7 +131,7 @@
                     new google.maps.LatLng(map.getCenter().lat()+0.0001,map.getCenter().lng()+0.0001),
                     new google.maps.LatLng(map.getCenter().lat()-0.0001,map.getCenter().lng()+0.0001),
                     new google.maps.LatLng(map.getCenter().lat()-0.0001,map.getCenter().lng()-0.0001),
-                    new google.maps.LatLng(map.getCenter().lat()+0.0001,map.getCenter().lng()-0.0001)		
+                    new google.maps.LatLng(map.getCenter().lat()+0.0001,map.getCenter().lng()-0.0001)       
                 ];
 
                 newLocation = new google.maps.Polygon({
@@ -212,10 +219,10 @@
 
                 //Output
                 if(type == "point"){
-                    listCoor.push([x,y]);	
+                    listCoor.push([x,y]);   
                 }
                 else if(type == "line"){
-                    listLines.push([x,y]);	
+                    listLines.push([x,y]);  
                 }
                 else{
                     listWired.push([x,y]);
@@ -234,10 +241,10 @@
         <br>
 
         <ul>
-        	<li> To add a volunteer node, click on anywhere in the map. A pin, which represents a wired node, will appear. </li>
-        	<li> To add a road, first click on the New Road button. Then, double click on the endpoints of the road on the map. A flag pin should appear every time you double click. Do not forget to click on the New Road button when defining another road. </li>
-        	<li> To place wireless nodes, you first have to define a wireless location. Click on the New Wireless Location and a polygon (set to a rectangle initially) will appear on the map. You can drag and shape this polygon to better fit the intended wireless location. Clicking inside the polygon will make a pin appear, this time representing a wireless node. </li>
-        	<li> To get the coordinates to give to the geometric heuristic, just click on the Save Coordinates button. </li>
+            <li> To add a volunteer node, click on anywhere in the map. A pin, which represents a wired node, will appear. </li>
+            <li> To add a road, first click on the New Road button. Then, double click on the endpoints of the road on the map. A flag pin should appear every time you double click. Do not forget to click on the New Road button when defining another road. </li>
+            <li> To place wireless nodes, you first have to define a wireless location. Click on the New Wireless Location and a polygon (set to a rectangle initially) will appear on the map. You can drag and shape this polygon to better fit the intended wireless location. Clicking inside the polygon will make a pin appear, this time representing a wireless node. </li>
+            <li> To get the coordinates to give to the geometric heuristic, just click on the Save Coordinates button. </li>
         </ul>
         <br>
         
@@ -255,5 +262,5 @@
         <paragraph> Click on this button to add a new wireless location. </paragraph>
         
     </body>
-	
+    
 </html>
